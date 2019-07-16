@@ -325,6 +325,7 @@ matrix:
                 - cmake
                 - bison
                 - flex
+                - check
                 - libjson-c-dev
                 - libvirt-dev
                 - libxen-dev
@@ -332,4 +333,28 @@ matrix:
       script:
         - mkdir build && cd build
         - cmake -DCMAKE_BUILD_TYPE=RELEASE ..
+        - make
+
+#
+# cross-compile for ARM
+#
+    - env:
+        - TEST="cross-compile for ARM"
+      addons:
+        apt:
+            sources:
+                - ubuntu-toolchain-r-test
+            packages:
+                - cmake
+                - bison
+                - flex
+                - check
+                - libjson-c-dev
+                - libvirt-dev
+                - libxen-dev
+                - libfuse-dev
+                - gcc-arm-linux-gnueabi
+      script:
+        - mkdir build && cd build
+        - cmake -DCMAKE_TOOLCHAIN_FILE=../cmake/toolchains/arm-gcc.cmake ..
         - make
