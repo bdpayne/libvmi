@@ -144,6 +144,9 @@ add_subdirectory(libvmi)
 # as it may have disabled some features due to unmet dependencies
 configure_file(libvmi/config.h.in ${PROJECT_BINARY_DIR}/config.h)
 add_subdirectory(tools)
+# generate config.h after processing libvmi/ and tools/ CMakeLists
+# as they may have disabled some features
+configure_file(libvmi/config.h.in ${PROJECT_BINARY_DIR}/config.h)
 if (ENABLE_TESTING)
     # this command should always be called in the root CMakeLists.txt
     enable_testing()
