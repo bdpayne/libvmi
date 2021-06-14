@@ -46,14 +46,53 @@ A demo of the event API using `MSRs`, `memory access` and `CR3` events.
 
 ## fool-patchguard
 
-Finds the index of `nt!NtLoadDriver` routine in the `SSDT`, and corrupts the entry.
+### Requirements
 
-Then it waits for a Patchguard check to return fake data.
+- [bddisasm](https://github.com/bitdefender/bddisasm) disassembler.
+
+### Overview
+
+This example will insert breakpoint in every Nt syscall and protect them from
+Patchguard read by returning fake data.
+
+### How it works
+
+It iterates through the syscall by locating the `KiServiceTable`, inserting a
+breakpoint on the syscall handler and protecting the frame by a read / write
+event
+
+When a breakpoint is hit, simply emulate the original instruction via `VMI_EVENT_RESPONSE_SET_EMUL_INSN`
+
+When a read /write access is received:
+
+1. filter on read events
+2. disassemble the instruction that caused the read
+3. determine the read size from the instruction
+4. check if this read access affects one of the breakpoints we inserted
+5. if that's the case, display which instruction is responsible for it
+6. if the instruction is a `XOR`, assume that PatchGuard was checking the memory
+7. finally emulate the read by responding with a custom input buffer where the syscall entry's content is present
+
+Example output:
+
+![fool-patchguard_output](https://user-images.githubusercontent.com/964610/101176653-12262600-3647-11eb-93ea-e31bf7fc2bc3.png)
+![fool-patchguard_output2](https://user-images.githubusercontent.com/964610/101176776-3f72d400-3647-11eb-895d-c5cf8c872787.png)
+
+To display a syscall `KiServiceTable` in `WinDBG` (Win7 64 bits):
+
+- Note the entry index: `Found NtLoadDriver SSDT entry: 220 (0xDC)` -> `0xDC` here
+- `lkd: dd /c1 KiServiceTable+4*<syscall_index>` -> this will trigger a read access
+- `lkd: u KiServiceTable + (<entry_value> >>> 4)`  -> to disassemble the syscall entrypoint
+
+![windbg_kiservice_table_entry](https://user-images.githubusercontent.com/964610/99801732-ce0b2f80-2b36-11eb-8b77-133603f2b90a.png)
+
+### LibVMI API
 
 Demonstrates how to use
 
 - `event->emul_read`
 - `VMI_EVENT_RESPONSE_SET_EMUL_READ_DATA`
+- `libddisasm`
 
 ## interrupt-event-example
 
